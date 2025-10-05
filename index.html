@@ -5,82 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pokémon GO Friend Codes</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      text-align: center;
-      padding: 2rem;
-    }
-
+    body { font-family: Arial, sans-serif; background: #f5f5f5; text-align: center; padding: 2rem; }
     h1 { color: #333; }
-
-    .form-container {
-      background: white;
-      padding: 1rem;
-      border-radius: 10px;
-      display: inline-block;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    input, select, button {
-      padding: 0.5rem;
-      margin: 0.3rem;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-
-    #friendList {
-      margin-top: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .friend-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 280px;
-      padding: 0.5rem;
-      border-radius: 8px;
-      color: #fff;
-      font-weight: bold;
-      transition: transform 0.2s;
-    }
-
-    .friend-card:hover {
-      transform: scale(1.03);
-    }
-
+    .form-container { background: white; padding: 1rem; border-radius: 10px; display: inline-block; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    input, select, button { padding: 0.5rem; margin: 0.3rem; border-radius: 5px; border: 1px solid #ccc; font-size: 1rem; }
+    #friendList { margin-top: 2rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+    .friend-card { display: flex; align-items: center; justify-content: space-between; width: 280px; padding: 0.5rem; border-radius: 8px; font-weight: bold; color: #fff; transition: transform 0.2s; }
+    .friend-card:hover { transform: scale(1.03); }
     .valor { background: #d63031; }
     .mystic { background: #0984e3; }
     .instinct { background: #fdcb6e; color: #000; }
-
-    .copy-btn {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: white;
-      padding: 0.3rem 0.6rem;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .copy-btn:hover {
-      background: rgba(255,255,255,0.3);
-    }
-
-    .error {
-      color: red;
-      margin-top: 0.5rem;
-    }
-
-    small {
-      opacity: 0.8;
-      font-size: 0.8rem;
-    }
+    .copy-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 0.3rem 0.6rem; border-radius: 5px; cursor: pointer; }
+    .copy-btn:hover { background: rgba(255,255,255,0.3); }
+    .error { color: red; margin-top: 0.5rem; }
+    small { opacity: 0.8; font-size: 0.8rem; }
   </style>
+
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js"></script>
 </head>
 <body>
   <h1>Pokémon GO Friend Codes</h1>
@@ -98,12 +41,8 @@
 
   <div id="friendList"></div>
 
-  <!-- Firebase + App Script -->
-  <script type="module">
-    import { initializeApp } from "firebase/app";
-    import { getDatabase, ref, push, onValue, get, set, query, orderByChild, equalTo } from "firebase/analytics";
-
-    // 🔧 Your Firebase configuration — replace these values with your own from Firebase Console
+  <script>
+    // 🔧 Firebase config — replace with your project values
     const firebaseConfig = {
       apiKey: "AIzaSyDT7OC_Tt9PJuGYMC7jFfLNnjJ8UZRXEEA",
       authDomain: "pokemon-go-codes.firebaseapp.com",
@@ -111,14 +50,13 @@
       projectId: "pokemon-go-codes",
       storageBucket: "pokemon-go-codes.firebasestorage.app",
       messagingSenderId: "615300125903",
-      appId: "1:615300125903:web:8623a5e49e375acc7ad3ba",
-      measurementID: "G-6MF6GGKFHM"
+      appId: "1:615300125903:web:8623a5e49e375acc7ad3ba"
     };
 
     // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const codesRef = ref(db, "friendCodes");
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const codesRef = db.ref("friendCodes");
 
     const friendInput = document.getElementById('friendCode');
     const teamSelect = document.getElementById('teamSelect');
@@ -127,10 +65,10 @@
     const errorMsg = document.getElementById('errorMsg');
     const COOLDOWN_HOURS = 1;
 
-    // 🕒 Convert timestamp to "time ago" text
+    // 🕒 Convert timestamp to "time ago"
     function timeAgo(timestamp) {
       const now = Date.now();
-      const diff = Math.floor((now - timestamp) / 1000); // in seconds
+      const diff = Math.floor((now - timestamp) / 1000); // seconds
       if (diff < 60) return `${diff}s ago`;
       const mins = Math.floor(diff / 60);
       if (mins < 60) return `${mins}m ago`;
@@ -140,16 +78,14 @@
       return `${days}d ago`;
     }
 
-    // 🧱 Render the list
+    // 🧱 Render friend codes
     function renderList(list) {
       friendList.innerHTML = '';
-      list.sort((a, b) => b.time - a.time); // newest first
-
+      list.sort((a,b) => b.time - a.time); // newest first
       list.forEach(f => {
         const div = document.createElement('div');
         div.className = `friend-card ${f.team}`;
         const timeText = timeAgo(f.time);
-
         div.innerHTML = `
           <div style="display:flex; flex-direction:column; align-items:flex-start;">
             <span>${f.code}</span>
@@ -162,13 +98,13 @@
     }
 
     // 🔁 Listen for live updates
-    onValue(codesRef, snapshot => {
+    codesRef.on("value", snapshot => {
       const data = snapshot.val() || {};
       const arr = Object.values(data);
       renderList(arr);
     });
 
-    // ➕ Add a friend code
+    // ➕ Add friend code
     submitBtn.addEventListener('click', async () => {
       const code = friendInput.value.trim();
       const team = teamSelect.value;
@@ -179,34 +115,33 @@
         return;
       }
 
-      // Cooldown check
-      const snapshot = await get(query(codesRef, orderByChild('code'), equalTo(code)));
-      let isOnCooldown = false;
-      snapshot.forEach(child => {
-        const val = child.val();
-        const diffHours = (Date.now() - val.time) / 36e5;
-        if (diffHours < COOLDOWN_HOURS) {
-          isOnCooldown = true;
+      // Check cooldown
+      codesRef.orderByChild('code').equalTo(code).once('value', snap => {
+        let onCooldown = false;
+        snap.forEach(child => {
+          const val = child.val();
+          const diffHours = (Date.now() - val.time) / 36e5;
+          if (diffHours < COOLDOWN_HOURS) onCooldown = true;
+        });
+
+        if (onCooldown) {
+          errorMsg.textContent = 'This code is on cooldown (1 hour). Try again later.';
+          return;
         }
+
+        // Add code
+        codesRef.push({ code, team, time: Date.now() });
+        friendInput.value = '';
       });
-
-      if (isOnCooldown) {
-        errorMsg.textContent = 'This code is on cooldown (1 hour). Try again later.';
-        return;
-      }
-
-      const newEntry = { code, team, time: Date.now() };
-      await push(codesRef, newEntry);
-
-      friendInput.value = '';
     });
 
-    // ⏱️ Auto-refresh "time ago" text every minute
-    setInterval(async () => {
-      const snap = await get(codesRef);
-      const data = snap.val() || {};
-      const arr = Object.values(data);
-      renderList(arr);
+    // ⏱️ Auto-refresh "time ago" every minute
+    setInterval(() => {
+      codesRef.once('value', snap => {
+        const data = snap.val() || {};
+        const arr = Object.values(data);
+        renderList(arr);
+      });
     }, 60000);
   </script>
 </body>
