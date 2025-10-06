@@ -135,23 +135,19 @@
       }
 
       // Check cooldown
-      codesRef.orderByChild('code').equalTo(code).once('value', snap => {
-        let onCooldown = false;
-        snap.forEach(child => {
-          const val = child.val();
-          const diffHours = (Date.now() - val.time) / 36e5;
-          if (diffHours < COOLDOWN_HOURS) onCooldown = true;
-        });
+    codesRef.child(code).get().then(snapshot => {
+      const existing = snapshot.val();
+      if (existing && (Date.now() - existing.time) < COOLDOWN_HOURS * 3600000) {
+        errorMsg.textContent = 'This code is on cooldown (1 hour). Try again later.';
+        return;
+      }
 
-        if (onCooldown) {
-          errorMsg.textContent = 'This code is on cooldown (1 hour). Try again later.';
-          return;
-        }
+      // add code
+    codesRef.child(code).set({ code, team, tags: selectedTags, time: Date.now() });
+    friendInput.value = '';
+    tagInputs.forEach(i => i.checked = false);
+});
 
-        // Add code
-        codesRef.push({ code, team, time: Date.now() });
-        friendInput.value = '';
-      });
     });
 
     // ⏱️ Auto-refresh "time ago" every minute
