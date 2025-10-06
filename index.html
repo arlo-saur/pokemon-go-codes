@@ -48,10 +48,11 @@
       <label><input type="checkbox" value="opens"> Opens Gifts 🎁</label>
       <label><input type="checkbox" value="sends"> Sends Gifts 💌</label>
       <label><input type="checkbox" value="raids"> Raids ⚔️</label>
+  </div>
     
     <button id="submitBtn">Add Friend Code</button>
     <div id="errorMsg" class="error"></div>
-  </div>
+  
 
   <div id="friendList"></div>
 
@@ -131,7 +132,7 @@
       // get selected tags
       const selectedTags = Array.from(tagInputs)
         .filter(i => i.checked)
-        .map(i => i.nextSibling.textContent.trim());
+        .map(i => i.parentNode.textContent.trim());
       
       errorMsg.textContent = '';
 
