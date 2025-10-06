@@ -127,6 +127,12 @@
     submitBtn.addEventListener('click', async () => {
       const code = friendInput.value.trim();
       const team = teamSelect.value;
+
+      // get selected tags
+      const selectedTags = Array.from(tagInputs)
+        .filter(i => i.checked)
+        .map(i => i.nextSibling.textContent.trim());
+      
       errorMsg.textContent = '';
 
       if (!/^\d{12}$/.test(code)) {
