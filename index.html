@@ -104,7 +104,9 @@
         const timeText = timeAgo(f.time);
 
         // tag elements
-        const tagHTML = (f.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+        const tagList = f.tags ? Object.values(f.tags) : [];
+        const tagHTML = tagList.map(t => `<span class="tag">${t}</span>`).join('');
+
         
         div.innerHTML = `
           <div style="display:flex; flex-direction:column; align-items:flex-start;">
@@ -120,8 +122,9 @@
     // 🔁 Listen for live updates
     codesRef.on("value", snapshot => {
       const data = snapshot.val() || {};
-      const arr = Object.values(data);
-      renderList(arr);
+      renderList(Object.values(data));
+    });
+
     });
 
     // ➕ Add friend code
@@ -150,9 +153,15 @@
       }
 
       // add code
-    codesRef.child(code).set({ code, team, tags: selectedTags, time: Date.now() });
-    friendInput.value = '';
-    tagInputs.forEach(i => i.checked = false);
+    codesRef.child(code).set({ code, team, tags: selectedTags, time: Date.now() })
+      .then(() => {
+        friendInput.value = '';
+        tagInputs.forEach(i => i.checked = false);
+      })
+      .catch(error => {
+        errorMsg.textContent = 'Error saving code: ' + error.message;
+      });
+
 });
 
     });
